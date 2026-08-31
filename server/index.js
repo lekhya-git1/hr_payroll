@@ -1,14 +1,15 @@
+const employeesRouter = require('./routes/employees.routes'); 
+const vendorsRouter = require('./routes/vendors.routes');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const employeesRouter = require('./routes/employees.routes');
-const vendorsRouter = require('./routes/vendors.routes');
+
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/employees', employeesRouter);
-app.use('/api/vendors', vendorsRouter);
+// app.use('/api/vendors', vendorsRouter); 
 
 app.get('/', (req, res) => {
   res.send('HR Payroll API is running');
