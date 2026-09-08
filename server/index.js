@@ -1,3 +1,4 @@
+const authRouter = require('./routes/auth.routes');
 const employeesRouter = require('./routes/employees.routes'); 
 const vendorsRouter = require('./routes/vendors.routes');
 const express = require('express');
@@ -10,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/employees', employeesRouter);
 // app.use('/api/vendors', vendorsRouter); 
+app.use('/api/auth', authRouter);
 
 app.get('/', (req, res) => {
   res.send('HR Payroll API is running');

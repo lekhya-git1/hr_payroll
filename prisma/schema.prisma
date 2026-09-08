@@ -43,3 +43,13 @@ model Vendor {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  role       String   // "ADMIN", "VENDOR", or "EMPLOYEE"
+  vendorId   Int?
+  employeeId Int?     @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

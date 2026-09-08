@@ -1,5 +1,12 @@
+import { Link } from 'react-router-dom';
+
 function Home() {
-  return <h1>Home Page (Public)</h1>;
+  return (
+    <div>
+      <h1>Home Page (Public)</h1>
+      <Link to="/dashboard">Go to Dashboard</Link>
+    </div>
+  );
 }
 
 export default Home;
