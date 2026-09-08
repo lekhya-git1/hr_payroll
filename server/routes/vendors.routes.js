@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
+const authMiddleware = require('../middleware/auth');
 
 // Create a vendor
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const vendor = await prisma.vendor.create({ data: req.body });
     res.json(vendor);
@@ -13,7 +14,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get all vendors
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   const vendors = await prisma.vendor.findMany();
   res.json(vendors);
 });

@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
+const authMiddleware = require('../middleware/auth');
 
 // Create an employee
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const employee = await prisma.employee.create({ data: req.body });
     res.json(employee);
@@ -13,13 +14,13 @@ router.post('/', async (req, res) => {
 });
 
 // Get all employees
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   const employees = await prisma.employee.findMany();
   res.json(employees);
 });
 
 // Get one employee by id
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   const employee = await prisma.employee.findUnique({
     where: { id: parseInt(req.params.id) }
   });
@@ -27,7 +28,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update an employee
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const employee = await prisma.employee.update({
       where: { id: parseInt(req.params.id) },
@@ -40,7 +41,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete an employee
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     await prisma.employee.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ message: 'Employee deleted' });
