@@ -20,6 +20,7 @@ model Employee {
   vendorId  Int
   vendor    Vendor   @relation(fields: [vendorId], references: [id])
   reports     Employee[] @relation("ManagerToReports")
+  attendance  Attendance[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -50,6 +51,17 @@ model User {
   role       String   // "ADMIN", "VENDOR", or "EMPLOYEE"
   vendorId   Int?
   employeeId Int?     @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  date       DateTime @default(now())
+  status     String   @default("present") // "present", "absent", "leave", "half-day"
+  checkIn    DateTime?
+  checkOut   DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
