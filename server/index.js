@@ -1,4 +1,5 @@
 const path = require('path');
+const reportsRouter = require('./routes/reports.routes');
 const documentsRouter = require('./routes/documents.routes');
 const expensesRouter = require('./routes/expenses.routes');
 const payrollRouter = require('./routes/payroll.routes');
@@ -16,6 +17,7 @@ const app = express();
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
+app.use('/api/reports', reportsRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/expenses', expensesRouter);
 app.use('/api/payroll', payrollRouter);
