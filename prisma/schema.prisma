@@ -21,6 +21,8 @@ model Employee {
   vendor    Vendor   @relation(fields: [vendorId], references: [id])
   reports     Employee[] @relation("ManagerToReports")
   attendance  Attendance[]
+  leaves      Leave[]
+  payrolls    Payroll[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -64,4 +66,34 @@ model Attendance {
   checkOut   DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+model Leave {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?
+  type        String   @default("casual") // "casual", "sick", "paid", "unpaid"
+  status      String   @default("pending") // "pending", "approved", "rejected"
+  approvedBy  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model Payroll {
+  id              Int      @id @default(autoincrement())
+  employeeId      Int
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  month           String   // e.g. "2026-09"
+  baseSalary      Float
+  totalWorkingDays Int
+  daysPresent     Int
+  grossPay        Float
+  taxDeduction    Float    @default(0)
+  pfDeduction     Float    @default(0)
+  netPay          Float
+  status          String   @default("pending") // "pending", "paid"
+  generatedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

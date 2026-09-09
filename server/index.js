@@ -1,3 +1,5 @@
+const payrollRouter = require('./routes/payroll.routes');
+const leaveRouter = require('./routes/leave.routes');
 const attendanceRouter = require('./routes/attendance.routes');
 const authRouter = require('./routes/auth.routes');
 const employeesRouter = require('./routes/employees.routes'); 
@@ -10,6 +12,8 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/api/payroll', payrollRouter);
+app.use('/api/leave', leaveRouter);
 app.use('/api/attendance', attendanceRouter);
 app.use('/api/employees', employeesRouter);
 // app.use('/api/vendors', vendorsRouter); 
