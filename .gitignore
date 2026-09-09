@@ -6,3 +6,5 @@ dist/
 .claude/
 .windsurf/
 .agents/
+server/uploads/*
+!server/uploads/.gitkeep

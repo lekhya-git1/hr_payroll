@@ -1,3 +1,6 @@
+const path = require('path');
+const documentsRouter = require('./routes/documents.routes');
+const expensesRouter = require('./routes/expenses.routes');
 const payrollRouter = require('./routes/payroll.routes');
 const leaveRouter = require('./routes/leave.routes');
 const attendanceRouter = require('./routes/attendance.routes');
@@ -11,7 +14,10 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
+app.use('/api/documents', documentsRouter);
+app.use('/api/expenses', expensesRouter);
 app.use('/api/payroll', payrollRouter);
 app.use('/api/leave', leaveRouter);
 app.use('/api/attendance', attendanceRouter);
