@@ -2,35 +2,60 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
 const authMiddleware = require('../middleware/auth');
+const requireRole = require('../middleware/requireRole');
 
-// Summary report: counts across the whole system
+// Summary report: counts across the system — scoped
 router.get('/summary', authMiddleware, async (req, res) => {
   try {
-    const totalEmployees = await prisma.employee.count();
-    const totalVendors = await prisma.vendor.count();
-    const pendingLeaves = await prisma.leave.count({ where: { status: 'pending' } });
-    const pendingExpenses = await prisma.expense.count({ where: { status: 'pending' } });
-    const totalPayrollPaid = await prisma.payroll.aggregate({
-      _sum: { netPay: true },
-      where: { status: 'paid' }
-    });
+    let totalEmployees, totalVendors, pendingLeaves, pendingExpenses, totalPayrollPaid;
+
+    if (req.user.role === 'ADMIN') {
+      totalEmployees = await prisma.employee.count();
+      totalVendors = await prisma.vendor.count();
+      pendingLeaves = await prisma.leave.count({ where: { status: 'pending' } });
+      pendingExpenses = await prisma.expense.count({ where: { status: 'pending' } });
+      const payrollAgg = await prisma.payroll.aggregate({
+        _sum: { netPay: true },
+        where: { status: 'paid' }
+      });
+      totalPayrollPaid = payrollAgg._sum.netPay || 0;
+    } else {
+      totalEmployees = await prisma.employee.count({ where: { vendorId: req.user.vendorId } });
+      totalVendors = 1; // vendors only see themselves
+      pendingLeaves = await prisma.leave.count({
+        where: { status: 'pending', employee: { vendorId: req.user.vendorId } }
+      });
+      pendingExpenses = await prisma.expense.count({
+        where: { status: 'pending', employee: { vendorId: req.user.vendorId } }
+      });
+      const payrollAgg = await prisma.payroll.aggregate({
+        _sum: { netPay: true },
+        where: { status: 'paid', employee: { vendorId: req.user.vendorId } }
+      });
+      totalPayrollPaid = payrollAgg._sum.netPay || 0;
+    }
 
     res.json({
       totalEmployees,
       totalVendors,
       pendingLeaves,
       pendingExpenses,
-      totalPayrollPaid: totalPayrollPaid._sum.netPay || 0
+      totalPayrollPaid
     });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// Attendance report: present/absent counts per employee
+// Attendance report: present/absent counts per employee — scoped
 router.get('/attendance', authMiddleware, async (req, res) => {
   try {
+    const where = req.user.role === 'ADMIN'
+      ? {}
+      : { vendorId: req.user.vendorId };
+
     const employees = await prisma.employee.findMany({
+      where,
       include: { attendance: true }
     });
 
@@ -47,10 +72,15 @@ router.get('/attendance', authMiddleware, async (req, res) => {
   }
 });
 
-// Payroll report: total paid per month
+// Payroll report: total paid per month — scoped
 router.get('/payroll', authMiddleware, async (req, res) => {
   try {
+    const where = req.user.role === 'ADMIN'
+      ? {}
+      : { employee: { vendorId: req.user.vendorId } };
+
     const payrolls = await prisma.payroll.findMany({
+      where,
       include: { employee: true },
       orderBy: { month: 'desc' }
     });
@@ -60,8 +90,8 @@ router.get('/payroll', authMiddleware, async (req, res) => {
   }
 });
 
-// Vendor report: employee count per vendor
-router.get('/vendors', authMiddleware, async (req, res) => {
+// Vendor report: employee count per vendor — ADMIN only
+router.get('/vendors', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   try {
     const vendors = await prisma.vendor.findMany({
       include: { employees: true }

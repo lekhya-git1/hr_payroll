@@ -18,6 +18,11 @@ function Sidebar() {
           <Link to="/employees" style={{ color: 'white' }}>Employees</Link>
           <Link to="/vendors" style={{ color: 'white' }}>Vendors</Link>
           <Link to="/payroll" style={{ color: 'white' }}>Payroll</Link>
+          <Link to="/attendance" style={{ color: 'white' }}>Attendance</Link>
+          <Link to="/leave" style={{ color: 'white' }}>Leave</Link>
+          <Link to="/expenses" style={{ color: 'white' }}>Expenses</Link>
+          <Link to="/documents" style={{ color: 'white' }}>Documents</Link>
+          <Link to="/reports" style={{ color: 'white' }}>Reports</Link>
         </nav>
       </div>
       <button onClick={handleLogout} style={{ padding: '8px', cursor: 'pointer' }}>

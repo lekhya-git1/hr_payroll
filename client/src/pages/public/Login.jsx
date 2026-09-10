@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../../services/authService';
+import { login as loginRequest } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
 
@@ -15,9 +17,8 @@ function Login() {
     e.preventDefault();
     setError('');
     try {
-      const res = await login(formData);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      const res = await loginRequest(formData);
+      login(res.data.token); // AuthContext stores token + decodes role/vendorId
       navigate('/dashboard');
     } catch (err) {
       setError('Invalid email or password');
