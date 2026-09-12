@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/lekhya-git1/hr_payroll#readme",
   "devDependencies": {
+    "@types/node": "^22.20.2",
     "concurrently": "^10.0.5",
     "prisma": "^7.9.1"
   },

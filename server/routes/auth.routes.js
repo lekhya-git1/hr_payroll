@@ -7,7 +7,8 @@ const prisma = require('../prismaClient');
 // SIGNUP
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password, role, vendorId, employeeId } = req.body;
+    const { email, password, vendorId, employeeId } = req.body;
+const role = 'EMPLOYEE';
 
     // Check if user already exists
     const existing = await prisma.user.findUnique({ where: { email } });

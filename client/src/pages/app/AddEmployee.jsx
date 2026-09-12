@@ -22,6 +22,7 @@ function AddEmployee() {
     try {
       await createEmployee(formData);
       navigate('/employees');
+      
     } catch (err) {
       console.error(err);
       alert('Failed to add employee');
