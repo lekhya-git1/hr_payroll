@@ -1,11 +1,5 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = 'http://localhost:5000/api/attendance';
-
-const authHeader = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-});
-
-export const getAttendance = () => axios.get(API_URL, authHeader());
-export const markAttendance = (data) => axios.post(API_URL, data, authHeader());
-export const updateAttendance = (id, data) => axios.put(`${API_URL}/${id}`, data, authHeader());
+export const getAttendance = () => api.get('/attendance');
+export const markAttendance = (data) => api.post('/attendance', data);
+export const updateAttendance = (id, data) => api.put(`/attendance/${id}`, data);

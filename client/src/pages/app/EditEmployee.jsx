@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import { updateEmployee } from '../../services/employeeService';
+import { getEmployee, updateEmployee } from '../../services/employeeService'; // ✅ use service methods
 
 function EditEmployee() {
   const { id } = useParams();
@@ -9,9 +8,9 @@ function EditEmployee() {
   const [formData, setFormData] = useState(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/employees/${id}`)
+    getEmployee(id)
       .then((res) => setFormData(res.data))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error('Failed to load employee:', err));
   }, [id]);
 
   const handleChange = (e) => {
@@ -27,7 +26,7 @@ function EditEmployee() {
         email: formData.email,
         role: formData.role,
         department: formData.department,
-        vendorId: parseInt(formData.vendorId)
+        salary: formData.salary // ✅ include salary, vendorId removed
       });
       navigate('/employees');
     } catch (err) {
@@ -47,7 +46,7 @@ function EditEmployee() {
         <input name="email" value={formData.email} onChange={handleChange} required />
         <input name="role" value={formData.role} onChange={handleChange} required />
         <input name="department" value={formData.department} onChange={handleChange} required />
-        <input name="vendorId" value={formData.vendorId} onChange={handleChange} required />
+        <input name="salary" value={formData.salary} onChange={handleChange} required /> {/* ✅ new salary field */}
         <button type="submit">Save Changes</button>
       </form>
     </div>

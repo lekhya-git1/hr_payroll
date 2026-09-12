@@ -4,58 +4,38 @@ const prisma = require('../prismaClient');
 const authMiddleware = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 
-// Summary report: counts across the system — scoped
-router.get('/summary', authMiddleware, async (req, res) => {
+// Summary report — VENDOR only
+router.get('/summary', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
-    let totalEmployees, totalVendors, pendingLeaves, pendingExpenses, totalPayrollPaid;
-
-    if (req.user.role === 'ADMIN') {
-      totalEmployees = await prisma.employee.count();
-      totalVendors = await prisma.vendor.count();
-      pendingLeaves = await prisma.leave.count({ where: { status: 'pending' } });
-      pendingExpenses = await prisma.expense.count({ where: { status: 'pending' } });
-      const payrollAgg = await prisma.payroll.aggregate({
-        _sum: { netPay: true },
-        where: { status: 'paid' }
-      });
-      totalPayrollPaid = payrollAgg._sum.netPay || 0;
-    } else {
-      totalEmployees = await prisma.employee.count({ where: { vendorId: req.user.vendorId } });
-      totalVendors = 1; // vendors only see themselves
-      pendingLeaves = await prisma.leave.count({
-        where: { status: 'pending', employee: { vendorId: req.user.vendorId } }
-      });
-      pendingExpenses = await prisma.expense.count({
-        where: { status: 'pending', employee: { vendorId: req.user.vendorId } }
-      });
-      const payrollAgg = await prisma.payroll.aggregate({
-        _sum: { netPay: true },
-        where: { status: 'paid', employee: { vendorId: req.user.vendorId } }
-      });
-      totalPayrollPaid = payrollAgg._sum.netPay || 0;
-    }
+    const totalEmployees = await prisma.employee.count({ where: { vendorId: req.user.vendorId } });
+    const pendingLeaves = await prisma.leave.count({
+      where: { status: 'pending', employee: { vendorId: req.user.vendorId } }
+    });
+    const pendingExpenses = await prisma.expense.count({
+      where: { status: 'pending', employee: { vendorId: req.user.vendorId } }
+    });
+    const payrollAgg = await prisma.payroll.aggregate({
+      _sum: { netPay: true },
+      where: { status: 'paid', employee: { vendorId: req.user.vendorId } }
+    });
 
     res.json({
       totalEmployees,
-      totalVendors,
+      totalVendors: 1, // vendors only see themselves
       pendingLeaves,
       pendingExpenses,
-      totalPayrollPaid
+      totalPayrollPaid: payrollAgg._sum.netPay || 0
     });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// Attendance report: present/absent counts per employee — scoped
-router.get('/attendance', authMiddleware, async (req, res) => {
+// Attendance report — VENDOR only
+router.get('/attendance', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
-    const where = req.user.role === 'ADMIN'
-      ? {}
-      : { vendorId: req.user.vendorId };
-
     const employees = await prisma.employee.findMany({
-      where,
+      where: { vendorId: req.user.vendorId },
       include: { attendance: true }
     });
 
@@ -72,15 +52,11 @@ router.get('/attendance', authMiddleware, async (req, res) => {
   }
 });
 
-// Payroll report: total paid per month — scoped
-router.get('/payroll', authMiddleware, async (req, res) => {
+// Payroll report — VENDOR only
+router.get('/payroll', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
-    const where = req.user.role === 'ADMIN'
-      ? {}
-      : { employee: { vendorId: req.user.vendorId } };
-
     const payrolls = await prisma.payroll.findMany({
-      where,
+      where: { employee: { vendorId: req.user.vendorId } },
       include: { employee: true },
       orderBy: { month: 'desc' }
     });
@@ -90,7 +66,7 @@ router.get('/payroll', authMiddleware, async (req, res) => {
   }
 });
 
-// Vendor report: employee count per vendor — ADMIN only
+// Vendor report — ADMIN only
 router.get('/vendors', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   try {
     const vendors = await prisma.vendor.findMany({

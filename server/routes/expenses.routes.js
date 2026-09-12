@@ -4,28 +4,19 @@ const prisma = require('../prismaClient');
 const authMiddleware = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 
-// Submit an expense (employee creates a claim) — ADMIN or EMPLOYEE
-router.post('/', authMiddleware, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+// Submit an expense — EMPLOYEE only (for themselves)
+router.post('/', authMiddleware, requireRole('EMPLOYEE'), async (req, res) => {
   try {
-    const { employeeId, title, amount, category, description } = req.body;
-
-    // Employees can only submit for themselves
-    if (req.user.role === 'EMPLOYEE' && req.user.employeeId !== parseInt(employeeId)) {
-      return res.status(403).json({ error: 'Forbidden: you can only submit your own expenses' });
-    }
-
-    // Vendors cannot submit directly — handled via employees
-    if (req.user.role === 'VENDOR') {
-      return res.status(403).json({ error: 'Forbidden: vendors cannot submit expenses directly' });
-    }
+    const { title, amount, category, description } = req.body;
 
     const expense = await prisma.expense.create({
       data: {
-        employeeId: parseInt(employeeId),
+        employeeId: req.user.employeeId, // force to their own ID
         title,
         amount: parseFloat(amount),
         category: category || 'general',
-        description
+        description,
+        status: 'pending'
       }
     });
     res.json(expense);
@@ -34,11 +25,11 @@ router.post('/', authMiddleware, requireRole('ADMIN', 'EMPLOYEE'), async (req, r
   }
 });
 
-// Get all expenses — scoped
-router.get('/', authMiddleware, async (req, res) => {
-  const where = req.user.role === 'ADMIN'
-    ? {}
-    : { employee: { vendorId: req.user.vendorId } };
+// Get all expenses — VENDOR sees all, EMPLOYEE sees only their own
+router.get('/', authMiddleware, requireRole('VENDOR', 'EMPLOYEE'), async (req, res) => {
+  const where = req.user.role === 'VENDOR'
+    ? { employee: { vendorId: req.user.vendorId } }
+    : { employeeId: req.user.employeeId };
 
   const expenses = await prisma.expense.findMany({
     where,
@@ -48,38 +39,23 @@ router.get('/', authMiddleware, async (req, res) => {
   res.json(expenses);
 });
 
-// Get expenses for a specific employee — scoped
-router.get('/employee/:employeeId', authMiddleware, async (req, res) => {
-  const employeeId = parseInt(req.params.employeeId);
-
-  const where = req.user.role === 'ADMIN'
-    ? { employeeId }
-    : { employeeId, employee: { vendorId: req.user.vendorId } };
-
-  const expenses = await prisma.expense.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    include: { employee: true }
-  });
-  res.json(expenses);
-});
-
-// Approve/reject/reimburse an expense — ADMIN or VENDOR only
-router.put('/:id/status', authMiddleware, requireRole('ADMIN', 'VENDOR'), async (req, res) => {
+// Approve/reject/reimburse an expense — VENDOR only
+router.put('/:id/status', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { status } = req.body; // "approved", "rejected", "reimbursed"
 
-    const where = req.user.role === 'ADMIN'
-      ? { id }
-      : { id, employee: { vendorId: req.user.vendorId } };
+    const existing = await prisma.expense.findUnique({
+      where: { id },
+      include: { employee: true }
+    });
+    if (!existing || existing.employee.vendorId !== req.user.vendorId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const expense = await prisma.expense.update({
-      where,
-      data: {
-        status,
-        approvedBy: req.user.id
-      }
+      where: { id },
+      data: { status, approvedBy: req.user.id }
     });
     res.json(expense);
   } catch (err) {
@@ -87,16 +63,20 @@ router.put('/:id/status', authMiddleware, requireRole('ADMIN', 'VENDOR'), async 
   }
 });
 
-// Delete an expense — scoped
-router.delete('/:id', authMiddleware, async (req, res) => {
+// Delete an expense — VENDOR only (scoped to their vendor)
+router.delete('/:id', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    const where = req.user.role === 'ADMIN'
-      ? { id }
-      : { id, employee: { vendorId: req.user.vendorId } };
+    const existing = await prisma.expense.findUnique({
+      where: { id },
+      include: { employee: true }
+    });
+    if (!existing || existing.employee.vendorId !== req.user.vendorId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
-    await prisma.expense.delete({ where });
+    await prisma.expense.delete({ where: { id } });
     res.json({ message: 'Expense deleted' });
   } catch (err) {
     res.status(400).json({ error: err.message });

@@ -10,7 +10,7 @@ function AddEmployee() {
     email: '',
     role: '',
     department: '',
-    vendorId: ''
+    salary: ''
   });
 
   const handleChange = (e) => {
@@ -20,10 +20,7 @@ function AddEmployee() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await createEmployee({
-        ...formData,
-        vendorId: parseInt(formData.vendorId)
-      });
+      await createEmployee(formData);
       navigate('/employees');
     } catch (err) {
       console.error(err);
@@ -40,7 +37,7 @@ function AddEmployee() {
         <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
         <input name="role" placeholder="Role" onChange={handleChange} required />
         <input name="department" placeholder="Department" onChange={handleChange} required />
-        <input name="vendorId" placeholder="Vendor ID" onChange={handleChange} required />
+        <input name="salary" type="number" placeholder="Salary" onChange={handleChange} required />
         <button type="submit">Add Employee</button>
       </form>
     </div>

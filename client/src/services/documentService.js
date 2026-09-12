@@ -1,17 +1,8 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = 'http://localhost:5000/api/documents';
-
-const authHeader = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-});
-
-export const getDocuments = () => axios.get(API_URL, authHeader());
+export const getDocuments = () => api.get('/documents');
 
 export const uploadDocument = (formData) =>
-  axios.post(API_URL, formData, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-      'Content-Type': 'multipart/form-data'
-    }
+  api.post('/documents', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
   });

@@ -4,19 +4,16 @@ const prisma = require('../prismaClient');
 const authMiddleware = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 
-// Mark attendance (check-in) for an employee — ADMIN or VENDOR only
-router.post('/', authMiddleware, requireRole('ADMIN', 'VENDOR'), async (req, res) => {
+// Mark attendance — VENDOR only
+router.post('/', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
     const { employeeId, status, checkIn } = req.body;
 
-    // Vendors can only mark attendance for their own employees
-    if (req.user.role !== 'ADMIN') {
-      const employee = await prisma.employee.findUnique({
-        where: { id: parseInt(employeeId) }
-      });
-      if (!employee || employee.vendorId !== req.user.vendorId) {
-        return res.status(403).json({ error: 'Forbidden: employee not in your vendor' });
-      }
+    const employee = await prisma.employee.findUnique({
+      where: { id: parseInt(employeeId) }
+    });
+    if (!employee || employee.vendorId !== req.user.vendorId) {
+      return res.status(403).json({ error: 'Forbidden: employee not in your vendor' });
     }
 
     const attendance = await prisma.attendance.create({
@@ -32,46 +29,46 @@ router.post('/', authMiddleware, requireRole('ADMIN', 'VENDOR'), async (req, res
   }
 });
 
-// Get all attendance records — scoped
-router.get('/', authMiddleware, async (req, res) => {
-  const where = req.user.role === 'ADMIN'
-    ? {}
-    : { employee: { vendorId: req.user.vendorId } };
+// Get all attendance — VENDOR sees their vendor's records, EMPLOYEE sees only their own
+router.get('/', authMiddleware, requireRole('VENDOR', 'EMPLOYEE'), async (req, res) => {
+  const where = req.user.role === 'VENDOR'
+    ? { employee: { vendorId: req.user.vendorId } }
+    : { employeeId: req.user.employeeId };
 
   const records = await prisma.attendance.findMany({
     where,
-    include: { employee: true }
+    include: { employee: true },
+    orderBy: { date: 'desc' }
   });
   res.json(records);
 });
 
-// Get attendance for a specific employee — scoped
-router.get('/employee/:employeeId', authMiddleware, async (req, res) => {
+// Get attendance for a specific employee — VENDOR only (scoped to their vendor)
+router.get('/employee/:employeeId', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   const employeeId = parseInt(req.params.employeeId);
 
-  const where = req.user.role === 'ADMIN'
-    ? { employeeId }
-    : { employeeId, employee: { vendorId: req.user.vendorId } };
-
   const records = await prisma.attendance.findMany({
-    where,
-    orderBy: { date: 'desc' },
-    include: { employee: true }
+    where: { employeeId, employee: { vendorId: req.user.vendorId } },
+    orderBy: { date: 'desc' }
   });
   res.json(records);
 });
 
-// Update attendance — scoped
-router.put('/:id', authMiddleware, async (req, res) => {
+// Update attendance — VENDOR only
+router.put('/:id', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    const where = req.user.role === 'ADMIN'
-      ? { id }
-      : { id, employee: { vendorId: req.user.vendorId } };
+    const existing = await prisma.attendance.findUnique({
+      where: { id },
+      include: { employee: true }
+    });
+    if (!existing || existing.employee.vendorId !== req.user.vendorId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const attendance = await prisma.attendance.update({
-      where,
+      where: { id },
       data: {
         status: req.body.status,
         checkOut: req.body.checkOut ? new Date(req.body.checkOut) : undefined
@@ -83,16 +80,20 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Delete attendance — scoped
-router.delete('/:id', authMiddleware, async (req, res) => {
+// Delete attendance — VENDOR only
+router.delete('/:id', authMiddleware, requireRole('VENDOR'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    const where = req.user.role === 'ADMIN'
-      ? { id }
-      : { id, employee: { vendorId: req.user.vendorId } };
+    const existing = await prisma.attendance.findUnique({
+      where: { id },
+      include: { employee: true }
+    });
+    if (!existing || existing.employee.vendorId !== req.user.vendorId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
-    await prisma.attendance.delete({ where });
+    await prisma.attendance.delete({ where: { id } });
     res.json({ message: 'Attendance record deleted' });
   } catch (err) {
     res.status(400).json({ error: err.message });

@@ -15,138 +15,141 @@ import Leave from './pages/app/Leave';
 import Expenses from './pages/app/Expenses';
 import Documents from './pages/app/Documents';
 import Reports from './pages/app/Reports';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected app routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Dashboard />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/employees"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Employees />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/employees/add"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <AddEmployee />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/employees/edit/:id"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <EditEmployee />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/vendors"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Vendors />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/vendors/add"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <AddVendor />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/attendance"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Attendance />
-              </AppLayout>
-           </ProtectedRoute>
-         }
-       />
-        <Route
-          path="/payroll"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Payroll />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/leave"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Leave />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/expenses"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Expenses />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/documents"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Documents />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Reports />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+          {/* Protected app routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees"
+            element={
+              <ProtectedRoute roles={['VENDOR']}>
+                <AppLayout>
+                  <Employees />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees/add"
+            element={
+              <ProtectedRoute roles={['VENDOR']}>
+                <AppLayout>
+                  <AddEmployee />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employees/edit/:id"
+            element={
+              <ProtectedRoute roles={['VENDOR']}>
+                <AppLayout>
+                  <EditEmployee />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendors"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <AppLayout>
+                  <Vendors />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendors/add"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <AppLayout>
+                  <AddVendor />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute roles={['VENDOR', 'EMPLOYEE']}>
+                <AppLayout>
+                  <Attendance />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payroll"
+            element={
+              <ProtectedRoute roles={['VENDOR']}>
+                <AppLayout>
+                  <Payroll />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leave"
+            element={
+              <ProtectedRoute roles={['VENDOR', 'EMPLOYEE']}>
+                <AppLayout>
+                  <Leave />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/expenses"
+            element={
+              <ProtectedRoute roles={['VENDOR' ,'EMPLOYEE']}>
+                <AppLayout>
+                  <Expenses />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute roles={['VENDOR']}>
+                <AppLayout>
+                  <Documents />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute roles={['VENDOR']}>
+                <AppLayout>
+                  <Reports />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
